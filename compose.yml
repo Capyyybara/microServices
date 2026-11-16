@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: microservices-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: microservices
+    # 宿主机端口:容器端口；绑 127.0.0.1 表示只允许本机访问
+    ports:
+      - "127.0.0.1:5432:5432"
+    # 命名卷持久化数据；PG 18 的数据目录在 /var/lib/postgresql/18/docker
+    volumes:
+      - pgdata:/var/lib/postgresql
+    # 健康检查：数据库能接受连接后，docker compose ps 显示 healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d microservices"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:8
+    container_name: microservices-redis
+    restart: unless-stopped
+    # 宿主机端口:容器端口；只允许本机访问
+    ports:
+      - "127.0.0.1:6379:6379"
+    # /data 是官方镜像声明的数据目录
+    volumes:
+      - redisdata:/data
+    # redis-cli ping 返回 PONG 即健康
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
